@@ -4,6 +4,8 @@ Index: NO
 References: NO
 Title: Wireless AdHoc Distribution for iOS Applications
 
+NOTE: this is a companion article to the adHocGenerate script available at [https://github.com/gknops/adHocGenerate](https://github.com/gknops/adHocGenerate).
+
 # Wireless AdHoc Distribution
 
 Wireless AdHoc Distribution allows your testers to install your iOS application by simply clicking a link on a web page or in an email. There is no longer a need for your testers to drag any packages to iTunes, connect their device, sync etc.
@@ -129,7 +131,7 @@ For the occasional test release the above method is perfectly fine. However if y
 
 Fortunately Xcode provides a way to use the command line to generate, sign and embed the mobileprovision from an archive (for details do a Google search for `xcrun` and `PackageApplication`).
 
-This allows us to use a script to generate the [IPA][], [Manifest][] and a web page containing the [Magic Link][]. As an example we will use the `adHocGenerate` script available at github. (TODO: add link).
+This allows us to use a script to generate the [IPA][], [Manifest][] and a web page containing the [Magic Link][]. As an example we will use the `adHocGenerate` script [available at github](https://github.com/gknops/adHocGenerate).
 
 The script is controlled via environment variables and an optional template for the `HTML` page.
 

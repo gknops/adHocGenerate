@@ -191,6 +191,8 @@ img {
 <div class="document">
 <div class="doctitle">Wireless AdHoc Distribution for iOS Applications</div>
 
+<p>NOTE: this is a companion article to the adHocGenerate script available at <a href="https://github.com/gknops/adHocGenerate">https://github.com/gknops/adHocGenerate</a></p>
+
 <h1 id="wirelessadhocdistribution">Wireless AdHoc Distribution</h1>
 
 <p>Wireless AdHoc Distribution allows your testers to install your iOS application by simply clicking a link on a web page or in an email. There is no longer a need for your testers to drag any packages to iTunes, connect their device, sync etc.</p>
@@ -325,7 +327,7 @@ WirelessAdHocDemo.ipa</code></pre>
 
 <p>Fortunately Xcode provides a way to use the command line to generate, sign and embed the mobileprovision from an archive (for details do a Google search for <code>xcrun</code> and <code>PackageApplication</code>).</p>
 
-<p>This allows us to use a script to generate the <a href="#ipa" title="IPA">IPA</a>, <a href="#manifest" title="Manifest">Manifest</a> and a web page containing the <a href="#magiclink" title="Magic Link">Magic Link</a>. As an example we will use the <code>adHocGenerate</code> script available at github. (TODO: add link).</p>
+<p>This allows us to use a script to generate the <a href="#ipa" title="IPA">IPA</a>, <a href="#manifest" title="Manifest">Manifest</a> and a web page containing the <a href="#magiclink" title="Magic Link">Magic Link</a>. As an example we will use the <code>adHocGenerate</code> script <a href="https://github.com/gknops/adHocGenerate">available at github</a>.</p>
 
 <p>The script is controlled via environment variables and an optional template for the <code>HTML</code> page.</p>
 
