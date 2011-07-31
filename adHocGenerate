@@ -1,0 +1,300 @@
+#!/usr/bin/perl -w
+###############################################################################
+#	Written in 2011 by Gerd Knops for BITart Consulting.
+#
+#	Project	: CocoaHeads Minneapolis blitz talk August 2011
+#	File	: adHocGenerate
+#	Author	: Gerd Knops gerti@BITart.com
+#
+###############################################################################
+#
+#	History:
+#	110729 Creation of file
+#
+###############################################################################
+#
+#	Description:
+#	Create adHoc distribution
+#
+###############################################################################
+#
+# 	License
+# 
+# 	Redistribution and use in source and binary forms, with or without
+# 	modification, are permitted without restriction.
+#
+# 
+# THIS SOFTWARE IS PROVIDED BY Gerd Knops ''AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###############################################################################
+# Configuration
+###############################################################################
+	
+	use strict;
+	
+	# These are the names of the environment variables we need
+	our @NeededEnvironment=qw(
+		AdHoc_TITLE
+		AdHoc_IDENTITY
+		AdHoc_PROVISONING_PROFILE
+		AdHoc_DESTDIR
+		AdHoc_IPA_URL
+		
+		SDKROOT
+		ARCHIVE_PATH
+		ARCHIVE_PRODUCTS_PATH
+		TARGETNAME
+	);
+	
+	# Optional environment variables:
+	# 
+	#	AdHoc_NAME					defaults to TARGETNAME
+	# 	AdHoc_HTML_TEMPLATE_PATH	defaults to built in template
+	# 	AdHoc_HTML_INDEX_NAME		defaults to 'index.html'
+	# 	AdHoc_PLIST_URL				defaults to AdHoc_IPA_URL, replacing 'ipa' extension with 'plist'
+	
+	our $PLIST_BUDDY='/usr/libexec/PlistBuddy';
+	
+###############################################################################
+# Main
+###############################################################################
+	
+	#
+	# Debug code: write environment to /tmp/adHocGenerate.env
+	# 
+	# open(OUT,">/tmp/adHocGenerate.env")
+	# 	or die("Can't open '/tmp/adHocGenerate.env' for write: $!\n");
+	# 
+	# foreach my $key (keys %ENV)
+	# {
+	# 	print OUT "$key: '$ENV{$key}'\n";
+	# }
+	# 
+	# close(OUT);
+	
+	#
+	# Check if the required environment variables are set
+	# 
+	foreach my $key (@NeededEnvironment)
+	{
+		unless(exists($ENV{$key}))
+		{
+			die("ERROR: environment variable '$key' not set!\n");
+		}
+	}
+	
+	#
+	# Defaults for optional variables
+	# 
+	unless(exists($ENV{AdHoc_NAME}))
+	{
+		$ENV{AdHoc_NAME}=$ENV{TARGETNAME};
+	}
+	
+	unless(exists($ENV{AdHoc_PLIST_URL}))
+	{
+		my $pl=$ENV{AdHoc_IPA_URL};
+		$pl=~s/\.ipa$/.plist/;
+		$ENV{AdHoc_PLIST_URL}=$pl;
+	}
+	
+	#
+	# And do the work
+	# 
+	generateIPA();
+	generateManifest();
+	generateHTML();
+
+###############################################################################
+# Subroutines
+###############################################################################
+sub generateIPA {
+	
+	#
+	# Grab the ApplicationPath
+	# 
+	my $appPath=getPlistValue(
+		"$ENV{ARCHIVE_PATH}/Info.plist",
+		':ApplicationProperties:ApplicationPath'
+	);
+	
+	#
+	# And run xcrun
+	# 
+	my @args=(
+		'/usr/bin/xcrun',
+		'-sdk',
+		$ENV{SDKROOT},
+		'PackageApplication',
+		'-v',
+		"$ENV{ARCHIVE_PRODUCTS_PATH}/$appPath",
+		'-o',
+		"$ENV{AdHoc_DESTDIR}/$ENV{TARGETNAME}.ipa",
+		'--sign',
+		"$ENV{AdHoc_IDENTITY}",
+		'--embed',
+		$ENV{AdHoc_PROVISONING_PROFILE}
+	);
+	
+	system(@args);
+}
+sub generateManifest {
+	
+	#
+	# Grab CFBundleIdentifier
+	# 
+	my $bundleID=getPlistValue(
+		"$ENV{ARCHIVE_PATH}/Info.plist",
+		':ApplicationProperties:CFBundleIdentifier'
+	);
+	
+	#
+	# Grab CFBundleShortVersionString
+	# 
+	my $bundleVersion=getPlistValue(
+		"$ENV{ARCHIVE_PATH}/Info.plist",
+		':ApplicationProperties:CFBundleShortVersionString'
+	);
+	
+	#
+	# The manifest
+	# 
+	my $manifest=<<"EOT";
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>assets</key>
+			<array>
+				<dict>
+					<key>kind</key>
+					<string>software-package</string>
+					<key>url</key>
+					<string>$ENV{AdHoc_IPA_URL}</string>
+				</dict>
+			</array>
+			<key>metadata</key>
+			<dict>
+				<key>bundle-identifier</key>
+				<string>$bundleID</string>
+				<key>bundle-version</key>
+				<string>$bundleVersion</string>
+				<key>kind</key>
+				<string>software</string>
+				<key>title</key>
+				<string>$ENV{AdHoc_TITLE}</string>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>
+EOT
+
+	#
+	# And write it out
+	# 
+	open(OUT,">$ENV{AdHoc_DESTDIR}/$ENV{TARGETNAME}.plist")
+		or die("Can't open '$ENV{AdHoc_DESTDIR}/$ENV{TARGETNAME}.plist' for write: $!\n");
+	
+	print OUT $manifest;
+	
+	close(OUT);
+}
+sub generateHTML {
+	
+	#
+	# Grab AdHoc_ShortVersion
+	# 
+	unless(exists($ENV{AdHoc_ShortVersion}))
+	{
+		$ENV{AdHoc_ShortVersion}=getPlistValue(
+			"$ENV{ARCHIVE_PATH}/Info.plist",
+			':ApplicationProperties:CFBundleShortVersionString'
+		);
+	}
+	
+	#
+	# Built-in template
+	# 
+	my $htmlTemplate=<<'EOT';
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+	<title>$AdHoc_NAME$ $AdHoc_ShortVersion$</title>
+</head>
+
+<body>
+	<h1>$AdHoc_NAME$ $AdHoc_ShortVersion$</h1>
+
+	Please <a href="itms-services://?action=download-manifest&amp;url=$AdHoc_PLIST_URL$">click this link to install</a>.
+
+</body>
+</html>
+EOT
+	
+	#
+	# Use user-provides template if it exists
+	# 
+	if(exists($ENV{AdHoc_HTML_TEMPLATE_PATH}))
+	{
+		local $/;
+		open(IN,"$ENV{AdHoc_HTML_TEMPLATE_PATH}")
+			or die("Can't open '$ENV{AdHoc_HTML_TEMPLATE_PATH}' for read: $!\n");
+		$htmlTemplate=<IN>;
+		close(IN);
+	}
+	
+	#
+	# Replace variables in template
+	# 
+	foreach my $key (keys %ENV)
+	{
+		$htmlTemplate=~s/\$$key\$/$ENV{$key}/g;
+	}
+	
+	#
+	# Write out HTML file
+	# 
+	my $destFile=$ENV{AdHoc_HTML_INDEX_NAME} // 'index.html';
+	
+	my $path="$ENV{AdHoc_DESTDIR}/$destFile";
+	
+	open(OUT,">$path")
+		or die("Can't open '$path' for write: $!\n");
+	
+	print OUT $htmlTemplate;
+	
+	close(OUT);
+}
+sub getPlistValue {
+	
+	#
+	# Grab plist value from Info.plist in the archive
+	# 
+	my $plistPath=shift;
+	my $plistKey=shift;
+	
+	my $val=`$PLIST_BUDDY -c 'Print $plistKey' '$plistPath'`;
+	
+	chomp($val);
+	
+	$val;
+}
+
+1;
+############################################################################EOF
