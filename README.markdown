@@ -1,3 +1,5 @@
+NOTE: see also the companion article at [http://gknops.github.com/adHocGenerate](http://gknops.github.com/adHocGenerate).
+
 # adHocGenerate
 
 `adHocGenerate` is a script designed to be used in a *Post Action* of an Xcode4's *Archive* action.
@@ -13,7 +15,7 @@ It produces all data required for wireless ad hoc distribution of an iOS applica
 To install `adHocGenerate` first clone the git repository from github. In a terminal window change to the directory you want to clone the repository to, then clone it:
 
 	cd /some/directory
-	git clone xxx  (TODO: add github url)
+	git clone git://github.com/gknops/adHocGenerate.git
 
 There are several ways how you can use the script:
 
