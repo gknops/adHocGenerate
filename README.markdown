@@ -114,7 +114,7 @@ In addition if not defined by you, `adHocGenerate` will provide a variable named
 
 ## Copying to web server
 
-Because it is easy to add another *Post Action* to copy the generated files to a web server, `adHocGenerate` does not take care of that. See the CocoaHeads Blitztalk document contained in the `HowTo` directory for an example.
+Because it is easy to add another *Post Action* to copy the generated files to a web server, `adHocGenerate` does not take care of that. See the CocoaHeads BlitzTalk document at [http://gknops.github.com/adHocGenerate](http://gknops.github.com/adHocGenerate).
 
 ## Debugging
 
